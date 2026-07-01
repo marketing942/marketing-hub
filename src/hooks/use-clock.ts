@@ -1,0 +1,14 @@
+"use client";
+
+import { useEffect, useState } from "react";
+
+/** Relógio ao vivo, atualizado a cada segundo (client-only para evitar hydration mismatch). */
+export function useClock() {
+  const [now, setNow] = useState<Date | null>(null);
+  useEffect(() => {
+    setNow(new Date());
+    const id = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(id);
+  }, []);
+  return now;
+}

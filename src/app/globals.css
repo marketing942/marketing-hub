@@ -1,0 +1,106 @@
+@import "tailwindcss";
+
+/*
+  CPPEM Marketing Hub — Tema dark premium (chumbo / verde / branco)
+  Tokens centrais usados por toda a aplicação.
+*/
+
+:root {
+  /* Fundos */
+  --bg: #0b0f0d; /* fundo principal — chumbo quase preto */
+  --bg-elevated: #0f1411; /* fundo alternativo/elevado */
+  --card: #111815; /* cards */
+  --card-alt: #141a17; /* cards alternativos */
+  --border: #243028; /* bordas */
+  --border-soft: #1a231e;
+
+  /* Verdes */
+  --green: #16a34a; /* verde principal */
+  --green-light: #22c55e; /* verde claro */
+  --green-neon: #4ade80; /* verde neon (destaque) */
+
+  /* Texto */
+  --text: #ffffff; /* texto principal */
+  --text-muted: #a3a3a3; /* texto secundário */
+
+  /* Status */
+  --status-good: #22c55e;
+  --status-warning: #f59e0b;
+  --status-critical: #ef4444;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-bg-elevated: var(--bg-elevated);
+  --color-card: var(--card);
+  --color-card-alt: var(--card-alt);
+  --color-border: var(--border);
+  --color-border-soft: var(--border-soft);
+
+  --color-green: var(--green);
+  --color-green-light: var(--green-light);
+  --color-green-neon: var(--green-neon);
+
+  --color-text: var(--text);
+  --color-text-muted: var(--text-muted);
+
+  --color-good: var(--status-good);
+  --color-warning: var(--status-warning);
+  --color-critical: var(--status-critical);
+
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+* {
+  border-color: var(--border);
+}
+
+html,
+body {
+  background: var(--bg);
+  color: var(--text);
+}
+
+body {
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Scrollbar discreta no tema dark */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #2f3d34;
+}
+
+/* Utilitário: brilho verde discreto para destaques na TV */
+.glow-green {
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--green) 30%, transparent),
+    0 0 24px -6px color-mix(in srgb, var(--green-neon) 45%, transparent);
+}
+
+@keyframes pulse-ring {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--green-neon) 40%, transparent);
+  }
+  70% {
+    box-shadow: 0 0 0 8px transparent;
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+.pulse-ring {
+  animation: pulse-ring 2s ease-out infinite;
+}
