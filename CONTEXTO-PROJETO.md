@@ -1,7 +1,7 @@
 # CPPEM Marketing Hub — Contexto do Projeto
 
 > Arquivo de memória da conversa. Serve para retomar o desenvolvimento caso o projeto seja fechado.
-> Última atualização: 2026-07-01
+> Última atualização: 2026-07-03
 
 ---
 
@@ -212,7 +212,13 @@ use-goals, use-alerts, use-manual-metrics.
       /api/cron/marketing-sync. UI: /settings/integrations (IntegrationStatusCard) e /sync-status. vercel.json cron */15.
       Status HONESTO: sem token = "desconectado". FALTA (quando houver tokens): preencher env + mapear
       marketing_integration_accounts (empresa→conta) + completar syncAccount Google/GA4.
-- [ ] Etapa 7 — Dashboard Builder (ativar/desativar, reordenar, layouts, aplicar no /tv)
+- [x] **Etapa 7 — Dashboard Builder**: ✅ CONCLUÍDA. `/builder` funcional (BuilderClient): seletor de empresa +
+      modo (TV/Executivo/Tráfego/Orgânico/Coordenação), lista de layouts do escopo, criar/editar/excluir, definir
+      padrão, ativar/desativar cards, **drag-and-drop** (framer-motion `Reorder`) para reordenar e tamanho P/M/G
+      (G ocupa 2 colunas). `lib/layouts/{types,queries,actions}.ts` (types client-safe separado do server-only;
+      saveLayout/deleteLayout/setDefaultLayout com permissão admin/coordenador, upsert dashboard_layouts +
+      replace dashboard_layout_cards, 1 padrão por empresa+modo). Aplicado no **/tv** (modo tv) e **/dashboard**
+      (modo executive): layout padrão define ordem/tamanho/quais cards; sem layout → fallback catálogo. Build OK.
 - [ ] Etapa 8 — Alertas e insights
 - [ ] Etapa 9 — Exportação e snapshots (imagem, PDF, histórico)
 - [ ] Etapa 10 — Testes, limpeza, empty/loading/error states, RLS, deploy Vercel, README
@@ -249,8 +255,15 @@ use-goals, use-alerts, use-manual-metrics.
   - Scripts: `npm run create-admin <email> <senha> ["Nome"]`, `npm run db:seed`.
   - Admin: marketing@cppem.com.br (role=admin). Senha temporária definida em 2026-07-01 — usuário deve trocar.
   - Rotas públicas no middleware: /login, /auth, /api/cron, /api/sync. Resto exige login.
-- **PRÓXIMO: Etapa 7** — Dashboard Builder: /builder com ativar/desativar cards, drag-and-drop (reordenar),
-  tamanho do card, layouts salvos (dashboard_layouts + dashboard_layout_cards) por empresa/modo (TV/Executivo/
-  Tráfego/Orgânico/Coordenação), definir layout padrão da TV; aplicar o layout no /tv e /dashboard.
+### 2026-07-03
+- Etapa 7 concluída: Dashboard Builder. Arquivos: `src/lib/layouts/{types,queries,actions}.ts`,
+  `src/components/builder/builder-client.tsx`, `/builder` page. `/tv` e `/dashboard` pages agora resolvem o
+  layout padrão via `resolveLayoutsByCompany` e passam para os componentes (TVDashboard/DashboardView aplicam
+  ordem, tamanho e seleção de cards; fallback para o catálogo quando não há layout). Drag-and-drop com
+  framer-motion `Reorder` (sem nova dependência). Type-check e `npm run build` OK (18 rotas).
+- ⚠️ Git: remote ajustado para `git@github.com:marketing942/marketing-hub.git`; push via HTTPS falhou (403 — a
+  credencial salva no Windows é da conta `H4zzard`, sem acesso de escrita). Pendente: token/colaborador correto.
+- **PRÓXIMO: Etapa 8** — Alertas e insights (avaliar regras de alerta em `marketing_alerts`, gerar alertas no sync,
+  UI de `/alerts` com status aberto/em análise/resolvido/ignorado, painel "Insights do Dia").
   Pendências opcionais acumuladas: /settings/users + UserCompanyAccessManager (Etapa 2), gráficos/histórico (Recharts),
   syncAccount Google Ads/GA4 completos, mapeamento de contas na UI de integrações.

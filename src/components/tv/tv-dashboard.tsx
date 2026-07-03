@@ -14,6 +14,7 @@ import {
 import Link from "next/link";
 import type { CompanyMetrics } from "@/lib/metrics/types";
 import { CARD_BY_KEY, TV_CARD_KEYS } from "@/lib/metrics/catalog";
+import type { LayoutCardEntry } from "@/lib/layouts/types";
 import { ROTATION_INTERVAL_MS } from "@/lib/companies";
 import { useCompanyRotation } from "@/hooks/use-company-rotation";
 import { useClock } from "@/hooks/use-clock";
@@ -21,7 +22,13 @@ import { MetricCard } from "@/components/cards/metric-card";
 import { EmptyState } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
-export function TVDashboard({ data }: { data: CompanyMetrics[] }) {
+export function TVDashboard({
+  data,
+  layouts = {},
+}: {
+  data: CompanyMetrics[];
+  layouts?: Record<string, LayoutCardEntry[]>;
+}) {
   const count = Math.max(data.length, 1);
   const { index, paused, progress, next, prev, togglePause } =
     useCompanyRotation(count, ROTATION_INTERVAL_MS);
@@ -50,12 +57,22 @@ export function TVDashboard({ data }: { data: CompanyMetrics[] }) {
   }
 
   const company = current.company;
-  const tvCards = TV_CARD_KEYS.map((k) => ({
-    key: k,
-    def: CARD_BY_KEY[k],
-    point: current.values[k],
-    goal: current.goals[k],
-  })).filter((c) => c.def && (c.point != null || c.goal != null));
+  // Layout salvo no Builder (modo TV) tem prioridade; senão usa o catálogo padrão.
+  const layoutCards = layouts[company.id];
+  const ordered =
+    layoutCards && layoutCards.length > 0
+      ? layoutCards.map((c) => ({ key: c.key, size: c.size }))
+      : TV_CARD_KEYS.map((k) => ({ key: k, size: "md" as const }));
+
+  const tvCards = ordered
+    .map((o) => ({
+      key: o.key,
+      size: o.size,
+      def: CARD_BY_KEY[o.key],
+      point: current.values[o.key],
+      goal: current.goals[o.key],
+    }))
+    .filter((c) => c.def && (c.point != null || c.goal != null));
 
   return (
     <div
@@ -134,18 +151,19 @@ export function TVDashboard({ data }: { data: CompanyMetrics[] }) {
             ) : (
               <div className="grid grid-cols-2 gap-5 lg:grid-cols-4">
                 {tvCards.map((c) => (
-                  <MetricCard
-                    key={c.key}
-                    label={c.def.label}
-                    value={c.point?.value ?? null}
-                    previous={c.point?.previous ?? null}
-                    format={c.def.format}
-                    source={c.point?.source ?? "supabase"}
-                    goal={c.goal}
-                    updatedAt={c.point?.updatedAt}
-                    higherIsBetter={c.def.higherIsBetter}
-                    size="lg"
-                  />
+                  <div key={c.key} className={cn(c.size === "lg" && "lg:col-span-2")}>
+                    <MetricCard
+                      label={c.def.label}
+                      value={c.point?.value ?? null}
+                      previous={c.point?.previous ?? null}
+                      format={c.def.format}
+                      source={c.point?.source ?? "supabase"}
+                      goal={c.goal}
+                      updatedAt={c.point?.updatedAt}
+                      higherIsBetter={c.def.higherIsBetter}
+                      size="lg"
+                    />
+                  </div>
                 ))}
               </div>
             )}
