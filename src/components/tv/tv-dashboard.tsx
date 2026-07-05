@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   Pause,
@@ -9,6 +9,8 @@ import {
   ChevronRight,
   Maximize,
   Camera,
+  Check,
+  Loader2,
   X,
 } from "lucide-react";
 import Link from "next/link";
@@ -20,6 +22,8 @@ import { useCompanyRotation } from "@/hooks/use-company-rotation";
 import { useClock } from "@/hooks/use-clock";
 import { MetricCard } from "@/components/cards/metric-card";
 import { EmptyState } from "@/components/ui/card";
+import { captureElement } from "@/lib/snapshots/capture";
+import { saveSnapshot } from "@/lib/snapshots/actions";
 import { cn } from "@/lib/utils";
 
 export function TVDashboard({
@@ -34,6 +38,7 @@ export function TVDashboard({
     useCompanyRotation(count, ROTATION_INTERVAL_MS);
   const clock = useClock();
   const rootRef = useRef<HTMLDivElement>(null);
+  const [snap, setSnap] = useState<"idle" | "busy" | "ok" | "error">("idle");
 
   const current = data[index];
 
@@ -42,6 +47,31 @@ export function TVDashboard({
     if (!el) return;
     if (!document.fullscreenElement) el.requestFullscreen?.();
     else document.exitFullscreen?.();
+  }
+
+  async function takeSnapshot() {
+    const el = rootRef.current;
+    if (!el || !current) return;
+    setSnap("busy");
+    try {
+      const image = await captureElement(el);
+      const res = await saveSnapshot({
+        companyId: current.company.id,
+        title: `TV - ${current.company.name}`,
+        imageBase64: image,
+        data: {
+          company: current.company.name,
+          metricDate: current.metricDate,
+          metrics: Object.fromEntries(
+            Object.entries(current.values).map(([k, p]) => [k, p.value]),
+          ),
+        },
+      });
+      setSnap(res.ok ? "ok" : "error");
+    } catch {
+      setSnap("error");
+    }
+    setTimeout(() => setSnap("idle"), 2500);
   }
 
   if (!current) {
@@ -195,8 +225,18 @@ export function TVDashboard({
           <TvBtn onClick={next} title="Próxima empresa">
             <ChevronRight className="h-5 w-5" />
           </TvBtn>
-          <TvBtn onClick={() => {}} title="Salvar snapshot (Etapa 9)" disabled>
-            <Camera className="h-5 w-5" />
+          <TvBtn
+            onClick={takeSnapshot}
+            title="Salvar snapshot"
+            disabled={snap === "busy"}
+          >
+            {snap === "busy" ? (
+              <Loader2 className="h-5 w-5 animate-spin" />
+            ) : snap === "ok" ? (
+              <Check className="h-5 w-5 text-good" />
+            ) : (
+              <Camera className={cn("h-5 w-5", snap === "error" && "text-critical")} />
+            )}
           </TvBtn>
           <TvBtn onClick={toggleFullscreen} title="Tela cheia">
             <Maximize className="h-5 w-5" />

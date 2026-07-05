@@ -1,7 +1,7 @@
 # CPPEM Marketing Hub — Contexto do Projeto
 
 > Arquivo de memória da conversa. Serve para retomar o desenvolvimento caso o projeto seja fechado.
-> Última atualização: 2026-07-04
+> Última atualização: 2026-07-04 (Etapa 9)
 
 ---
 
@@ -229,7 +229,14 @@ use-goals, use-alerts, use-manual-metrics.
       automática no cron `/api/cron/marketing-sync` (service role, após o sync). Insights: `lib/insights/build.ts`
       + `InsightPanel` (server) renderizado no /overview ("Insights do Dia": leads hoje vs ontem, melhor empresa,
       empresa em atenção, gargalos, o que fazer hoje). Build OK.
-- [ ] Etapa 9 — Exportação e snapshots (imagem, PDF, histórico)
+- [x] **Etapa 9 — Exportação e snapshots**: ✅ CONCLUÍDA. Captura client `lib/snapshots/capture.ts`
+      (**html2canvas-pro** — troca do html2canvas 1.4.1, que não parseia `color-mix/oklch` do Tailwind v4; +
+      jsPDF via import dinâmico; imageUrlToDataUrl p/ baixar snapshots salvos). `lib/snapshots/actions.ts`
+      (saveSnapshot: ensureBucket público "snapshots" via service role, upload PNG, insert em metric_snapshots com
+      created_by; deleteSnapshot autor/admin remove linha+arquivo). `lib/snapshots/queries.ts` (fetchSnapshots +
+      autor). UI: `SnapshotControls` (PNG/PDF/Salvar) no /dashboard; botão de snapshot **reativado no /tv**
+      (captura tela cheia + salva); `/snapshots` (SnapshotsGallery: filtro por empresa, download PNG/PDF, abrir,
+      excluir, **comparação lado a lado** de 2). next.config: remotePatterns do host Supabase p/ next/image. Build OK.
 - [ ] Etapa 10 — Testes, limpeza, empty/loading/error states, RLS, deploy Vercel, README
 
 ---
@@ -275,8 +282,13 @@ use-goals, use-alerts, use-manual-metrics.
 - Etapa 8 concluída. Arquivos: `src/lib/alerts/{rules,generate,queries,actions}.ts`,
   `src/lib/insights/build.ts`, `src/components/alerts/alerts-client.tsx`, `src/components/insights/insight-panel.tsx`,
   `/alerts` page, InsightPanel no /overview, geração no cron. Type-check + build OK (18 rotas).
-- **PRÓXIMO: Etapa 9** — Exportação e snapshots (imagem/PDF via html2canvas+jsPDF já instalados; salvar em
-  metric_snapshots + Storage; histórico em /snapshots; botão de snapshot na TV — hoje desabilitado). Depois Etapa 10.
+- Etapa 9 concluída. Arquivos: `src/lib/snapshots/{capture,queries,actions}.ts`,
+  `src/components/snapshots/{snapshot-controls,snapshots-gallery}.tsx`, `/snapshots` page, SnapshotControls no
+  /dashboard, botão reativado no /tv, next.config remotePatterns. Dependência: **html2canvas-pro** (removido
+  html2canvas). Type-check + build OK.
+  ⚠️ Runtime: o bucket "snapshots" é criado sob demanda no 1º save (service role). Se o Storage exigir políticas,
+  o bucket é público (leitura ok); escrita/exclusão são feitas via service role no server.
+- **PRÓXIMO: Etapa 10** — Testes, limpeza, empty/loading/error states, revisão de RLS, deploy Vercel, README.
   Pendências opcionais acumuladas: /settings/users + UserCompanyAccessManager (Etapa 2), gráficos/histórico (Recharts),
   syncAccount Google Ads/GA4 completos, mapeamento de contas na UI de integrações,
   alerta "API com erro" (precisa mapear integração→empresa).

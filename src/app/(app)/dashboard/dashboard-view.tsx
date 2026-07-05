@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import type { CompanyMetrics } from "@/lib/metrics/types";
 import { CARD_CATALOG, CARD_BY_KEY } from "@/lib/metrics/catalog";
 import type { LayoutCardEntry } from "@/lib/layouts/types";
 import { MetricCard } from "@/components/cards/metric-card";
+import { SnapshotControls } from "@/components/snapshots/snapshot-controls";
 import { EmptyState } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
@@ -17,6 +18,7 @@ export function DashboardView({
 }) {
   const [activeId, setActiveId] = useState<string>(data[0]?.company.id ?? "");
   const active = data.find((d) => d.company.id === activeId) ?? data[0];
+  const captureRef = useRef<HTMLDivElement>(null);
 
   if (!active) {
     return (
@@ -30,46 +32,66 @@ export function DashboardView({
   const byCategory = (cat: string) => CARD_CATALOG.filter((c) => c.category === cat);
   const layoutCards = layouts[active.company.id];
 
+  const snapshotData = {
+    company: active.company.name,
+    metricDate: active.metricDate,
+    metrics: Object.fromEntries(
+      Object.entries(active.values).map(([k, p]) => [k, p.value]),
+    ),
+  };
+
   return (
     <div>
-      {/* Seletor de empresa */}
-      <div className="mb-6 flex flex-wrap items-center gap-2">
-        {data.map(({ company: c }) => (
-          <button
-            key={c.id}
-            onClick={() => setActiveId(c.id)}
-            className={cn(
-              "flex items-center gap-2 rounded-lg border px-3 py-2 text-sm transition-colors",
-              active.company.id === c.id
-                ? "border-green/50 bg-green/10 text-green-neon"
-                : "border-border bg-card text-text-muted hover:text-text",
-            )}
-          >
-            <span
-              className="flex h-6 w-6 items-center justify-center rounded-md text-[10px] font-bold"
-              style={{ backgroundColor: `${c.brandColor}22`, color: c.brandColor }}
+      {/* Seletor de empresa + exportação */}
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-2">
+          {data.map(({ company: c }) => (
+            <button
+              key={c.id}
+              onClick={() => setActiveId(c.id)}
+              className={cn(
+                "flex items-center gap-2 rounded-lg border px-3 py-2 text-sm transition-colors",
+                active.company.id === c.id
+                  ? "border-green/50 bg-green/10 text-green-neon"
+                  : "border-border bg-card text-text-muted hover:text-text",
+              )}
             >
-              {c.initials}
-            </span>
-            {c.name}
-          </button>
-        ))}
+              <span
+                className="flex h-6 w-6 items-center justify-center rounded-md text-[10px] font-bold"
+                style={{ backgroundColor: `${c.brandColor}22`, color: c.brandColor }}
+              >
+                {c.initials}
+              </span>
+              {c.name}
+            </button>
+          ))}
+        </div>
+        {active.hasData && (
+          <SnapshotControls
+            targetRef={captureRef}
+            companyId={active.company.id}
+            title={`Dashboard - ${active.company.name}`}
+            data={snapshotData}
+          />
+        )}
       </div>
 
-      {!active.hasData ? (
-        <EmptyState
-          title={`Sem dados para ${active.company.name}`}
-          description="Ainda não há métricas registradas. Elas serão preenchidas pelas integrações (Meta/Google/Instagram/GA4) ou por lançamentos manuais. Configure metas em Metas e dados em Dados Manuais."
-        />
-      ) : layoutCards && layoutCards.length > 0 ? (
-        <LayoutGrid metrics={active} layoutCards={layoutCards} />
-      ) : (
-        <>
-          <Section title="Mídia paga" metrics={active} cards={byCategory("paid")} />
-          <Section title="Leads do dia" metrics={active} cards={byCategory("leads")} />
-          <Section title="Orgânico" metrics={active} cards={byCategory("organic")} />
-        </>
-      )}
+      <div ref={captureRef}>
+        {!active.hasData ? (
+          <EmptyState
+            title={`Sem dados para ${active.company.name}`}
+            description="Ainda não há métricas registradas. Elas serão preenchidas pelas integrações (Meta/Google/Instagram/GA4) ou por lançamentos manuais. Configure metas em Metas e dados em Dados Manuais."
+          />
+        ) : layoutCards && layoutCards.length > 0 ? (
+          <LayoutGrid metrics={active} layoutCards={layoutCards} />
+        ) : (
+          <>
+            <Section title="Mídia paga" metrics={active} cards={byCategory("paid")} />
+            <Section title="Leads do dia" metrics={active} cards={byCategory("leads")} />
+            <Section title="Orgânico" metrics={active} cards={byCategory("organic")} />
+          </>
+        )}
+      </div>
     </div>
   );
 }
