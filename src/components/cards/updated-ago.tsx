@@ -10,17 +10,21 @@ export function UpdatedAgo({ updatedAt }: { updatedAt: string | null | undefined
 
   useEffect(() => {
     if (!updatedAt) {
-      setLabel("—");
-      return;
+      // reset diferido (evita setState síncrono no corpo do efeito)
+      const t = setTimeout(() => setLabel("—"), 0);
+      return () => clearTimeout(t);
     }
     const update = () =>
       setLabel(
         "há " +
           formatDistanceToNowStrict(new Date(updatedAt), { locale: ptBR }),
       );
-    update();
+    const first = setTimeout(update, 0);
     const id = setInterval(update, 30_000);
-    return () => clearInterval(id);
+    return () => {
+      clearTimeout(first);
+      clearInterval(id);
+    };
   }, [updatedAt]);
 
   return <span suppressHydrationWarning>{label}</span>;

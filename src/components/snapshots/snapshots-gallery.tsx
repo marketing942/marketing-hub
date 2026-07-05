@@ -7,7 +7,6 @@ import {
   FileText,
   Trash2,
   GitCompareArrows,
-  X,
   Loader2,
   ExternalLink,
 } from "lucide-react";

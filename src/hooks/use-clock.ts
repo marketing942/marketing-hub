@@ -6,9 +6,14 @@ import { useEffect, useState } from "react";
 export function useClock() {
   const [now, setNow] = useState<Date | null>(null);
   useEffect(() => {
-    setNow(new Date());
+    // Leitura inicial via timer (evita setState síncrono no corpo do efeito)
+    // e mantém client-only para não quebrar a hidratação.
+    const first = setTimeout(() => setNow(new Date()), 0);
     const id = setInterval(() => setNow(new Date()), 1000);
-    return () => clearInterval(id);
+    return () => {
+      clearTimeout(first);
+      clearInterval(id);
+    };
   }, []);
   return now;
 }

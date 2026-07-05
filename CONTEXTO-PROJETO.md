@@ -1,7 +1,7 @@
 # CPPEM Marketing Hub — Contexto do Projeto
 
 > Arquivo de memória da conversa. Serve para retomar o desenvolvimento caso o projeto seja fechado.
-> Última atualização: 2026-07-04 (Etapa 9)
+> Última atualização: 2026-07-05 (Etapa 10 — plano concluído)
 
 ---
 
@@ -237,7 +237,13 @@ use-goals, use-alerts, use-manual-metrics.
       autor). UI: `SnapshotControls` (PNG/PDF/Salvar) no /dashboard; botão de snapshot **reativado no /tv**
       (captura tela cheia + salva); `/snapshots` (SnapshotsGallery: filtro por empresa, download PNG/PDF, abrir,
       excluir, **comparação lado a lado** de 2). next.config: remotePatterns do host Supabase p/ next/image. Build OK.
-- [ ] Etapa 10 — Testes, limpeza, empty/loading/error states, RLS, deploy Vercel, README
+- [x] **Etapa 10 — Fechamento**: ✅ CONCLUÍDA. Loading states (`(app)/loading.tsx`, `tv/loading.tsx`),
+      error boundaries (`(app)/error.tsx`, `global-error.tsx`), `not-found.tsx` global. Limpeza: removido
+      `lib/demo-data.ts` (código morto). Lint zerado — corrigidas impurezas do React Compiler em
+      `use-company-rotation` (Date.now fora do render), `use-clock` e `updated-ago` (setState diferido),
+      e import não usado. `.env.example` criado (+ exceção no .gitignore) e README reescrito (setup, DB,
+      scripts, rotas, perfis/RLS, deploy Vercel). RLS revisada (helpers is_admin/can_access_company/can_edit
+      consistentes por tabela). Build OK (18 rotas), `npm run lint` OK.
 
 ---
 
@@ -288,7 +294,12 @@ use-goals, use-alerts, use-manual-metrics.
   html2canvas). Type-check + build OK.
   ⚠️ Runtime: o bucket "snapshots" é criado sob demanda no 1º save (service role). Se o Storage exigir políticas,
   o bucket é público (leitura ok); escrita/exclusão são feitas via service role no server.
-- **PRÓXIMO: Etapa 10** — Testes, limpeza, empty/loading/error states, revisão de RLS, deploy Vercel, README.
-  Pendências opcionais acumuladas: /settings/users + UserCompanyAccessManager (Etapa 2), gráficos/histórico (Recharts),
-  syncAccount Google Ads/GA4 completos, mapeamento de contas na UI de integrações,
-  alerta "API com erro" (precisa mapear integração→empresa).
+- Etapa 10 concluída. Arquivos: `src/app/(app)/{loading,error}.tsx`, `src/app/tv/loading.tsx`,
+  `src/app/{global-error,not-found}.tsx`, `.env.example`, README reescrito; hooks/updated-ago corrigidos p/ lint.
+- **🎉 PLANO DE 10 ETAPAS CONCLUÍDO.** App funcional: TV rotativa, dashboard/overview, builder, metas,
+  dados manuais, integrações+sync, alertas+insights, snapshots/export. Falta apenas rodar em produção com as
+  credenciais reais + ligar as integrações quando houver tokens.
+- **Pendências opcionais (não bloqueiam)**: /settings/users + UserCompanyAccessManager (Etapa 2);
+  gráficos/histórico (Recharts); syncAccount Google Ads/GA4 completos; mapeamento de contas
+  (marketing_integration_accounts) na UI de integrações; alerta "API com erro" (precisa mapear integração→empresa);
+  testes automatizados (nenhum framework configurado ainda).

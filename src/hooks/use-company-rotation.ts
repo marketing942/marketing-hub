@@ -11,7 +11,8 @@ export function useCompanyRotation(count: number, intervalMs = ROTATION_INTERVAL
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
   const [progress, setProgress] = useState(0);
-  const startRef = useRef<number>(Date.now());
+  // Iniciado no efeito de rotação (evita chamar Date.now() durante o render).
+  const startRef = useRef<number>(0);
 
   const reset = useCallback(() => {
     startRef.current = Date.now();
@@ -45,6 +46,7 @@ export function useCompanyRotation(count: number, intervalMs = ROTATION_INTERVAL
 
   useEffect(() => {
     if (paused) return;
+    startRef.current = Date.now(); // (re)inicia o ciclo ao montar/retomar
     const tick = setInterval(() => {
       const elapsed = Date.now() - startRef.current;
       const p = Math.min(elapsed / intervalMs, 1);
