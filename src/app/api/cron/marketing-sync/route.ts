@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { runAllSync } from "@/lib/integrations/sync";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { generateAlerts } from "@/lib/alerts/generate";
 
 /**
  * Endpoint de cron (Vercel Cron / agendador externo).
@@ -21,7 +23,20 @@ export async function GET(request: Request) {
   }
 
   const summaries = await runAllSync();
-  return NextResponse.json({ ranAt: new Date().toISOString(), results: summaries });
+
+  // Reavalia os alertas com base nas métricas recém-sincronizadas (service role).
+  let alerts: { created: number; resolved: number; open: number } | { error: string };
+  try {
+    alerts = await generateAlerts(createAdminClient());
+  } catch (e) {
+    alerts = { error: (e as Error).message };
+  }
+
+  return NextResponse.json({
+    ranAt: new Date().toISOString(),
+    results: summaries,
+    alerts,
+  });
 }
 
 export { GET as POST };

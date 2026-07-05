@@ -7,6 +7,7 @@ import type { CompanyMetrics } from "@/lib/metrics/types";
 import { computeAttainment } from "@/lib/metrics/status";
 import { formatMetric } from "@/lib/metrics/formatting";
 import { cpl as calcCpl } from "@/lib/metrics/calculations";
+import { InsightPanel } from "@/components/insights/insight-panel";
 import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -89,6 +90,9 @@ export default async function OverviewPage() {
         title="Visão Geral"
         description="Consolidado das três empresas em tempo real."
       />
+
+      {/* Insights do Dia */}
+      <InsightPanel data={data} />
 
       {/* KPIs consolidados */}
       <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">

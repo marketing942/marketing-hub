@@ -1,7 +1,7 @@
 # CPPEM Marketing Hub — Contexto do Projeto
 
 > Arquivo de memória da conversa. Serve para retomar o desenvolvimento caso o projeto seja fechado.
-> Última atualização: 2026-07-03
+> Última atualização: 2026-07-04
 
 ---
 
@@ -219,7 +219,16 @@ use-goals, use-alerts, use-manual-metrics.
       saveLayout/deleteLayout/setDefaultLayout com permissão admin/coordenador, upsert dashboard_layouts +
       replace dashboard_layout_cards, 1 padrão por empresa+modo). Aplicado no **/tv** (modo tv) e **/dashboard**
       (modo executive): layout padrão define ordem/tamanho/quais cards; sem layout → fallback catálogo. Build OK.
-- [ ] Etapa 8 — Alertas e insights
+- [x] **Etapa 8 — Alertas e insights**: ✅ CONCLUÍDA. Motor de regras puro `lib/alerts/rules.ts`
+      (métrica fora da meta, empresa sem meta, investimento sem leads, queda brusca de leads, sem publicações
+      orgânicas, dados desatualizados). `lib/alerts/generate.ts` (buildMetricsForAlerts com client de sessão OU
+      admin + generateAlerts: dedupe por empresa+regra em alertas abertos, insere novos e auto-resolve os que não
+      valem mais; metadata.auto/rule). `lib/alerts/{queries,actions}.ts` (fetchAlerts; updateAlertStatus +
+      generateAlertsNow, permissão admin/coordenador). UI `/alerts` (AlertsClient): filtros por status/empresa,
+      contadores, ações aberto/em análise/resolvido/ignorado/reabrir, botão "Gerar alertas agora". Geração
+      automática no cron `/api/cron/marketing-sync` (service role, após o sync). Insights: `lib/insights/build.ts`
+      + `InsightPanel` (server) renderizado no /overview ("Insights do Dia": leads hoje vs ontem, melhor empresa,
+      empresa em atenção, gargalos, o que fazer hoje). Build OK.
 - [ ] Etapa 9 — Exportação e snapshots (imagem, PDF, histórico)
 - [ ] Etapa 10 — Testes, limpeza, empty/loading/error states, RLS, deploy Vercel, README
 
@@ -263,7 +272,11 @@ use-goals, use-alerts, use-manual-metrics.
   framer-motion `Reorder` (sem nova dependência). Type-check e `npm run build` OK (18 rotas).
 - ⚠️ Git: remote ajustado para `git@github.com:marketing942/marketing-hub.git`; push via HTTPS falhou (403 — a
   credencial salva no Windows é da conta `H4zzard`, sem acesso de escrita). Pendente: token/colaborador correto.
-- **PRÓXIMO: Etapa 8** — Alertas e insights (avaliar regras de alerta em `marketing_alerts`, gerar alertas no sync,
-  UI de `/alerts` com status aberto/em análise/resolvido/ignorado, painel "Insights do Dia").
+- Etapa 8 concluída. Arquivos: `src/lib/alerts/{rules,generate,queries,actions}.ts`,
+  `src/lib/insights/build.ts`, `src/components/alerts/alerts-client.tsx`, `src/components/insights/insight-panel.tsx`,
+  `/alerts` page, InsightPanel no /overview, geração no cron. Type-check + build OK (18 rotas).
+- **PRÓXIMO: Etapa 9** — Exportação e snapshots (imagem/PDF via html2canvas+jsPDF já instalados; salvar em
+  metric_snapshots + Storage; histórico em /snapshots; botão de snapshot na TV — hoje desabilitado). Depois Etapa 10.
   Pendências opcionais acumuladas: /settings/users + UserCompanyAccessManager (Etapa 2), gráficos/histórico (Recharts),
-  syncAccount Google Ads/GA4 completos, mapeamento de contas na UI de integrações.
+  syncAccount Google Ads/GA4 completos, mapeamento de contas na UI de integrações,
+  alerta "API com erro" (precisa mapear integração→empresa).
