@@ -1,14 +1,16 @@
 import { PageHeader } from "@/components/layout/page-header";
 import { EmptyState } from "@/components/ui/card";
 import { fetchIntegrations } from "@/lib/integrations/queries";
+import { fetchCompanies } from "@/lib/supabase/queries";
 import { getCurrentUser } from "@/lib/auth/user";
 import { IntegrationStatusCard } from "@/components/integrations/integration-status-card";
 
 export const dynamic = "force-dynamic";
 
 export default async function IntegrationsSettingsPage() {
-  const [integrations, user] = await Promise.all([
+  const [integrations, companies, user] = await Promise.all([
     fetchIntegrations(),
+    fetchCompanies(),
     getCurrentUser(),
   ]);
   const canManage = user && ["admin", "coordinator"].includes(user.role);
@@ -28,7 +30,7 @@ export default async function IntegrationsSettingsPage() {
       ) : (
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           {integrations.map((it) => (
-            <IntegrationStatusCard key={it.id} data={it} />
+            <IntegrationStatusCard key={it.id} data={it} companies={companies ?? []} />
           ))}
         </div>
       )}

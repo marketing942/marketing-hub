@@ -2,9 +2,11 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Plug, RefreshCw, CheckCircle2, XCircle, MinusCircle, Loader2 } from "lucide-react";
+import { Plug, RefreshCw, CheckCircle2, XCircle, MinusCircle, Loader2, Link2 } from "lucide-react";
 import type { IntegrationView } from "@/lib/integrations/queries";
+import type { Company } from "@/lib/types";
 import { testIntegration, syncNow } from "@/lib/integrations/actions";
+import { AccountMappingEditor } from "./account-mapping-editor";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -17,11 +19,22 @@ const STATUS_UI = {
   disconnected: { label: "Desconectado", cls: "text-text-muted", Icon: MinusCircle },
 } as const;
 
-export function IntegrationStatusCard({ data }: { data: IntegrationView }) {
+export function IntegrationStatusCard({
+  data,
+  companies,
+}: {
+  data: IntegrationView;
+  companies: Company[];
+}) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [action, setAction] = useState<"test" | "sync" | null>(null);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [showMap, setShowMap] = useState(false);
+
+  const currentMap = Object.fromEntries(
+    data.accounts.map((a) => [a.companyId, a.externalAccountId]),
+  );
 
   const s = STATUS_UI[data.status];
 
@@ -106,17 +119,30 @@ export function IntegrationStatusCard({ data }: { data: IntegrationView }) {
 
       {/* Contas mapeadas */}
       <div className="mt-4 flex items-center justify-between border-t border-border-soft pt-3 text-xs">
-        <span className="text-text-muted">
+        <button
+          onClick={() => setShowMap((v) => !v)}
+          className="inline-flex items-center gap-1.5 text-text-muted transition-colors hover:text-green-neon"
+        >
+          <Link2 className="h-3.5 w-3.5" />
           {data.accounts.length > 0
-            ? `${data.accounts.length} conta(s) mapeada(s) · ${data.accountLabel}`
-            : `Nenhuma conta mapeada (${data.accountLabel})`}
-        </span>
+            ? `${data.accounts.length} conta(s) mapeada(s) · mapear`
+            : `Nenhuma conta mapeada · mapear`}
+        </button>
         <span className="text-text-muted">
           {data.lastSyncedAt
             ? `Sync há ${formatDistanceToNowStrict(new Date(data.lastSyncedAt), { locale: ptBR })}`
             : "Nunca sincronizado"}
         </span>
       </div>
+
+      {showMap && (
+        <AccountMappingEditor
+          provider={data.id}
+          accountLabel={data.accountLabel}
+          companies={companies}
+          current={currentMap}
+        />
+      )}
 
       {(msg || data.lastError) && (
         <p
