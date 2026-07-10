@@ -104,7 +104,9 @@ export async function runProviderSync(
     return finish("error", 0, msg);
   }
 
-  let records = 0;
+  let records = 0; // total de valores (não-nulos) efetivamente gravados
+  let okAccounts = 0; // contas que responderam sem erro
+  const errors: string[] = [];
   const today = new Date().toISOString().slice(0, 10);
 
   for (const acc of accounts) {
@@ -114,22 +116,56 @@ export async function runProviderSync(
         company_id: acc.company_id,
         metric_date: today,
       };
+      let written = 0;
       for (const r of rows) {
         const col = DAILY_COLUMN[r.metricKey];
-        if (col && r.value != null) patch[col] = r.value;
+        if (col && r.value != null) {
+          patch[col] = r.value;
+          written++;
+        }
       }
       const { error } = await admin
         .from("marketing_metrics_daily")
         .upsert(patch, { onConflict: "company_id,metric_date" });
       if (error) throw new Error(error.message);
-      records += rows.length;
-      await log("info", `Empresa ${acc.company_id}: ${rows.length} métricas sincronizadas.`);
+      records += written;
+      okAccounts++;
+      await log(
+        "info",
+        `Empresa ${acc.company_id}: ${written} métricas com valor (de ${rows.length}).`,
+      );
     } catch (e) {
+      errors.push((e as Error).message);
       await log("error", `Empresa ${acc.company_id}: ${(e as Error).message}`);
     }
   }
 
-  return finish("success", records, `Sincronização concluída (${records} métricas).`);
+  // Status honesto: se NENHUMA conta respondeu, é erro (mostra a causa no card).
+  if (okAccounts === 0) {
+    const cause = errors[0] ?? "Nenhuma conta retornou dados.";
+    return finish(
+      "error",
+      0,
+      `Falha em todas as ${accounts.length} conta(s). Causa: ${cause}`,
+    );
+  }
+
+  // Sucesso parcial: algumas contas falharam.
+  if (errors.length > 0) {
+    return finish(
+      "success",
+      records,
+      `Parcial: ${okAccounts}/${accounts.length} conta(s) OK, ${records} métricas. ` +
+        `Falha em ${errors.length}: ${errors[0]}`,
+    );
+  }
+
+  // Tudo ok — mas pode não haver gasto/veiculação hoje (records = 0 é legítimo).
+  const note =
+    records === 0
+      ? " — nenhum dado para hoje ainda (sem veiculação/gasto no período)."
+      : "";
+  return finish("success", records, `Sincronização concluída (${records} métricas)${note}.`);
 }
 
 /** Sincroniza todos os provedores. */

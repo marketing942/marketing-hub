@@ -11,6 +11,9 @@ function canManage(role?: string) {
   return role === "admin" || role === "coordinator";
 }
 
+/** Provedores cujo teste pode validar de verdade uma conta mapeada. */
+const DEEP_TEST_PROVIDERS: ProviderId[] = ["meta_ads", "instagram"];
+
 /** Testa a conexão real do provedor e persiste o status. */
 export async function testIntegration(provider: ProviderId): Promise<TestResult> {
   const user = await getCurrentUser();
@@ -18,10 +21,38 @@ export async function testIntegration(provider: ProviderId): Promise<TestResult>
     return { ok: false, status: "error", message: "Sem permissão." };
   }
 
-  const result = await ADAPTERS[provider].testConnection();
+  const admin = createAdminClient();
+
+  // 1) Teste básico do token (ex.: /me no Meta).
+  let result = await ADAPTERS[provider].testConnection();
+
+  // 2) Teste profundo: se o token é válido e há conta mapeada, tenta LER a conta
+  //    (é aqui que aparece o erro de permissão ads_read, que /me não revela).
+  if (result.ok && DEEP_TEST_PROVIDERS.includes(provider)) {
+    const { data: acct } = await admin
+      .from("marketing_integration_accounts")
+      .select("external_account_id")
+      .eq("provider", provider)
+      .eq("active", true)
+      .limit(1)
+      .maybeSingle();
+
+    if (acct?.external_account_id) {
+      try {
+        await ADAPTERS[provider].syncAccount(acct.external_account_id);
+      } catch (e) {
+        result = {
+          ok: false,
+          status: "error",
+          message:
+            `Token válido, mas falha ao ler a conta ${acct.external_account_id}: ` +
+            (e as Error).message,
+        };
+      }
+    }
+  }
 
   // Persiste status via service role
-  const admin = createAdminClient();
   await admin
     .from("marketing_integrations")
     .update({
